@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { InternalNavbarMeta } from "@/components/auth/InternalNavbarMeta";
 import { Container } from "@/components/ui/Container";
 
 export function OutreachNavbar() {
@@ -21,7 +22,7 @@ export function OutreachNavbar() {
               Internal
             </span>
           </div>
-          <p className="text-xs text-zinc-500 md:text-sm">Outreach Center</p>
+          <InternalNavbarMeta label="Outreach Center" />
         </div>
       </Container>
     </header>

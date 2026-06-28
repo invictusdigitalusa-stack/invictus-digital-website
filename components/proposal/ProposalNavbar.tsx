@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { InternalNavbarMeta } from "@/components/auth/InternalNavbarMeta";
 import { Container } from "@/components/ui/Container";
 
 export function ProposalNavbar() {
@@ -21,7 +22,7 @@ export function ProposalNavbar() {
               Internal
             </span>
           </div>
-          <p className="text-xs text-zinc-500 md:text-sm">Proposal Generator</p>
+          <InternalNavbarMeta label="Proposal Generator" />
         </div>
       </Container>
     </header>

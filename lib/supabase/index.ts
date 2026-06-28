@@ -1,6 +1,11 @@
 export { createSupabaseClient } from "./client";
 
 export {
+  resolveWorkspaceId,
+  resolveWorkspaceIdFromRequest,
+} from "./workspace";
+
+export {
   projectStages,
   projectStageProgress,
   proposalInvestments,

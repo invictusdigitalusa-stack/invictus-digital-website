@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { InternalNavbarMeta } from "@/components/auth/InternalNavbarMeta";
 import { Container } from "@/components/ui/Container";
 
 export function CRMNavbar() {
@@ -21,7 +22,7 @@ export function CRMNavbar() {
               Internal
             </span>
           </div>
-          <p className="text-xs text-zinc-500 md:text-sm">CRM Dashboard</p>
+          <InternalNavbarMeta label="CRM Dashboard" />
         </div>
       </Container>
     </header>

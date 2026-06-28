@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { InternalNavbarMeta } from "@/components/auth/InternalNavbarMeta";
 import { Container } from "@/components/ui/Container";
 
 export function DeliveryNavbar() {
@@ -21,7 +22,7 @@ export function DeliveryNavbar() {
               Internal
             </span>
           </div>
-          <p className="text-xs text-zinc-500 md:text-sm">Delivery System</p>
+          <InternalNavbarMeta label="Delivery System" />
         </div>
       </Container>
     </header>
