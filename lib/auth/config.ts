@@ -23,6 +23,7 @@ export const LOGIN_PATH = "/login";
 
 export const AUTH_COOKIE_ACCESS = "invictus-auth-access";
 export const AUTH_COOKIE_REFRESH = "invictus-auth-refresh";
+export const AUTH_COOKIE_WORKSPACE = "invictus_workspace";
 
 /** Internal pages that require authentication when enforcement is enabled. */
 export const AUTH_REQUIRED_PAGE_PREFIXES = [

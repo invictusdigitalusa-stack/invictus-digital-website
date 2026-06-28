@@ -1,5 +1,10 @@
 import type { NextRequest, NextResponse } from "next/server";
-import { AUTH_COOKIE_ACCESS, AUTH_COOKIE_REFRESH } from "./config";
+import {
+  AUTH_COOKIE_ACCESS,
+  AUTH_COOKIE_REFRESH,
+  AUTH_COOKIE_WORKSPACE,
+} from "./config";
+import type { WorkspaceId } from "./types";
 
 type AuthCookieSession = {
   accessToken: string;
@@ -19,6 +24,17 @@ function getSecureCookieOptions(maxAge: number) {
 
 export function getAccessTokenFromRequest(request: NextRequest | Request) {
   return readAuthCookies(request).accessToken;
+}
+
+export function readWorkspaceCookie(request: NextRequest | Request): WorkspaceId | null {
+  const cookieHeader = request.headers.get("cookie") ?? "";
+  const match = cookieHeader.match(
+    new RegExp(`(?:^|; )${AUTH_COOKIE_WORKSPACE}=([^;]*)`)
+  );
+
+  const value = match?.[1] ? decodeURIComponent(match[1]).trim() : "";
+
+  return value || null;
 }
 
 export function readAuthCookies(request: NextRequest | Request) {
@@ -64,12 +80,27 @@ export function setAuthCookies(
   }
 }
 
+export function setWorkspaceCookie(
+  response: NextResponse,
+  workspaceId: WorkspaceId
+) {
+  response.cookies.set(
+    AUTH_COOKIE_WORKSPACE,
+    workspaceId,
+    getSecureCookieOptions(60 * 60 * 24 * 365)
+  );
+}
+
 export function clearAuthCookies(response: NextResponse) {
   response.cookies.set(AUTH_COOKIE_ACCESS, "", {
     ...getSecureCookieOptions(0),
     maxAge: 0,
   });
   response.cookies.set(AUTH_COOKIE_REFRESH, "", {
+    ...getSecureCookieOptions(0),
+    maxAge: 0,
+  });
+  response.cookies.set(AUTH_COOKIE_WORKSPACE, "", {
     ...getSecureCookieOptions(0),
     maxAge: 0,
   });

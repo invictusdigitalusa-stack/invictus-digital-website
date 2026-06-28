@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { readAuthCookies } from "./cookies";
+import { readAuthCookies, readWorkspaceCookie } from "./cookies";
 import {
   AUTH_REQUEST_HEADERS,
   getDefaultWorkspaceId,
@@ -140,7 +140,9 @@ export async function resolveRequestSession(
 ): Promise<Session> {
   const { accessToken } = readAuthCookies(request);
   const preferredWorkspaceId =
-    readWorkspaceIdFromRequest(request) ?? getDefaultWorkspaceId();
+    readWorkspaceCookie(request) ??
+    readWorkspaceIdFromRequest(request) ??
+    getDefaultWorkspaceId();
 
   if (accessToken) {
     const authenticatedSession = await resolveSupabaseAuthSession(

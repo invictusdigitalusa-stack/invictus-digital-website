@@ -1,9 +1,10 @@
 "use client";
 
 import { logout } from "@/lib/auth/logout";
-import type { Session } from "@/lib/auth/types";
+import type { Session, Workspace } from "@/lib/auth/types";
 import { useToast } from "@/components/os/useToast";
 import { useEffect, useRef, useState } from "react";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
 function getDisplayEmail(session: Session | null) {
   const email = session?.user?.email?.trim();
@@ -14,13 +15,10 @@ function getDisplayRole(session: Session | null) {
   return session?.role ?? "Signed in";
 }
 
-function getDisplayWorkspace(session: Session | null) {
-  return session?.workspace?.name?.trim() || "Signed in";
-}
-
 export function UserMenu() {
   const { showToast } = useToast();
   const [session, setSession] = useState<Session | null>(null);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -31,10 +29,14 @@ export function UserMenu() {
     async function loadSession() {
       try {
         const response = await fetch("/api/auth/session");
-        const data = (await response.json()) as { session?: Session | null };
+        const data = (await response.json()) as {
+          session?: Session | null;
+          workspaces?: Workspace[];
+        };
 
         if (isMounted) {
           setSession(data.session ?? null);
+          setWorkspaces(data.workspaces ?? []);
         }
       } catch {
         if (isMounted) {
@@ -160,9 +162,11 @@ export function UserMenu() {
               <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
                 Workspace
               </p>
-              <p className="mt-1 text-sm text-zinc-300">
-                {getDisplayWorkspace(session)}
-              </p>
+              <WorkspaceSwitcher
+                session={session}
+                workspaces={workspaces}
+                onSessionChange={setSession}
+              />
             </div>
           </div>
 

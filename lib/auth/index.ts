@@ -4,6 +4,7 @@ export {
   AUTH_API_PREFIX,
   AUTH_COOKIE_ACCESS,
   AUTH_COOKIE_REFRESH,
+  AUTH_COOKIE_WORKSPACE,
   INTERNAL_PAGE_PREFIXES,
   INTERNAL_API_PREFIX,
   LOGIN_PATH,
@@ -69,7 +70,9 @@ export {
   clearAuthCookies,
   getAccessTokenFromRequest,
   readAuthCookies,
+  readWorkspaceCookie,
   setAuthCookies,
+  setWorkspaceCookie,
 } from "./cookies";
 
 export {
