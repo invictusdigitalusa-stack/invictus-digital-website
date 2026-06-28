@@ -165,6 +165,56 @@ async function fetchMembershipRows(
   }));
 }
 
+export async function fetchWorkspaceStats(
+  workspaceId: WorkspaceId
+): Promise<{ memberCount: number; createdAt: string | null } | null> {
+  if (!isSupabaseAuthEnabled()) {
+    return {
+      memberCount: 1,
+      createdAt: null,
+    };
+  }
+
+  const client = createSupabaseAdminClient();
+
+  if (!client) {
+    return null;
+  }
+
+  const [{ count, error: memberCountError }, { data: workspace, error: workspaceError }] =
+    await Promise.all([
+      client
+        .from("workspace_members")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId),
+      client
+        .from("workspaces")
+        .select("created_at")
+        .eq("id", workspaceId)
+        .maybeSingle(),
+    ]);
+
+  if (memberCountError || workspaceError) {
+    if (
+      isMissingWorkspaceSchemaError(memberCountError ?? {}) ||
+      isMissingWorkspaceSchemaError(workspaceError ?? {})
+    ) {
+      return null;
+    }
+
+    console.error(
+      "Failed to fetch workspace stats:",
+      memberCountError?.message ?? workspaceError?.message
+    );
+    return null;
+  }
+
+  return {
+    memberCount: count ?? 0,
+    createdAt: workspace?.created_at ?? null,
+  };
+}
+
 export async function fetchUserWorkspaces(
   userId: string,
   _accessToken: string

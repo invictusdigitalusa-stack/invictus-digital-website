@@ -29,6 +29,7 @@ export const config = {
     "/outreach/:path*",
     "/audit/:path*",
     "/design-system/:path*",
+    "/settings/:path*",
     "/api/:path*",
   ],
 };

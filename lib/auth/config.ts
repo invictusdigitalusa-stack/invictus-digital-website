@@ -15,6 +15,7 @@ export const INTERNAL_PAGE_PREFIXES = [
   "/outreach",
   "/audit",
   "/design-system",
+  "/settings",
 ] as const;
 
 export const INTERNAL_API_PREFIX = "/api";
@@ -33,6 +34,7 @@ export const AUTH_REQUIRED_PAGE_PREFIXES = [
   "/outreach",
   "/proposal",
   "/delivery",
+  "/settings",
 ] as const;
 
 export const AUTH_API_PREFIX = "/api/auth";

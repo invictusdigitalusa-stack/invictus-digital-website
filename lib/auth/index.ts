@@ -53,6 +53,7 @@ export {
   fetchCurrentWorkspace,
   fetchUserWorkspaces,
   fetchWorkspaceMembership,
+  fetchWorkspaceStats,
   normalizeWorkspaceRole,
   resolveUserWorkspaceSession,
 } from "./workspace";

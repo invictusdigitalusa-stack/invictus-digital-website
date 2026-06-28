@@ -2,7 +2,10 @@ import { NextRequest } from "next/server";
 import { apiSuccess } from "@/lib/api/responses";
 import { readAuthCookies } from "@/lib/auth/cookies";
 import { resolveRequestSession } from "@/lib/auth/session";
-import { fetchUserWorkspaces } from "@/lib/auth/workspace";
+import {
+  fetchUserWorkspaces,
+  fetchWorkspaceStats,
+} from "@/lib/auth/workspace";
 
 export async function GET(request: NextRequest) {
   const session = await resolveRequestSession(request);
@@ -12,6 +15,9 @@ export async function GET(request: NextRequest) {
         readAuthCookies(request).accessToken ?? ""
       )
     : [];
+  const workspaceStats = session.user
+    ? await fetchWorkspaceStats(session.workspace.id)
+    : null;
 
-  return apiSuccess({ session, workspaces });
+  return apiSuccess({ session, workspaces, workspaceStats });
 }

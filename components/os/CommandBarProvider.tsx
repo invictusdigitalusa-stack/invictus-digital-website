@@ -28,6 +28,23 @@ function buildCommands(
 
   return [
     {
+      id: "open-settings",
+      title: "Open Settings",
+      description: "Manage workspace, team, integrations, and security.",
+      keywords: ["settings", "workspace", "team", "integrations", "billing"],
+      icon: (
+        <CommandIcon>
+          <path
+            d="M3.5 6.5H12.5M3.5 9.5H12.5M3.5 12.5H9.5M6.5 3.5L8 2.5L9.5 3.5V5.5L8 6.5L6.5 5.5V3.5Z"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+        </CommandIcon>
+      ),
+      action: () => router.push("/settings"),
+    },
+    {
       id: "open-crm",
       title: "Open CRM",
       description: "Go to the lead pipeline dashboard.",

@@ -7,6 +7,11 @@ import type { DashboardStats } from "@/lib/supabase";
 
 const quickLinks = [
   {
+    title: "Settings",
+    href: "/settings",
+    description: "Workspace, team, integrations, security, and billing.",
+  },
+  {
     title: "Audit Engine",
     href: "/audit",
     description: "Analyze local business websites in minutes.",

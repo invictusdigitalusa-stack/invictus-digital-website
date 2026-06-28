@@ -119,5 +119,6 @@ export const INTERNAL_ROUTE_MATCHER = [
   "/outreach/:path*",
   "/audit/:path*",
   "/design-system/:path*",
+  "/settings/:path*",
   "/api/:path*",
 ] as const;
