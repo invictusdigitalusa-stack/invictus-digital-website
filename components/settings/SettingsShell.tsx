@@ -4,9 +4,12 @@ import { Card } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
 import { useToast } from "@/components/os/useToast";
 import type { Session } from "@/lib/auth/types";
+import type { GmailIntegrationStatus } from "@/lib/integrations/gmail/types";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { GmailIntegrationSection } from "./GmailIntegrationSection";
+import { IntegrationsGrid } from "./IntegrationsGrid";
 import {
-  integrationCards,
   settingsSections,
   type SettingsSection,
 } from "./settingsSections";
@@ -58,11 +61,17 @@ export function SettingsShell({
   authEnforcementEnabled,
   supabaseAuthEnabled,
 }: SettingsShellProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [activeSection, setActiveSection] = useState<SettingsSection>("workspace");
+  const [activeIntegration, setActiveIntegration] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [workspaceStats, setWorkspaceStats] = useState<WorkspaceStats | null>(null);
+  const [gmailStatus, setGmailStatus] = useState<GmailIntegrationStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const callbackStatus = searchParams.get("status");
+  const callbackError = searchParams.get("error");
 
   useEffect(() => {
     let isMounted = true;
@@ -96,6 +105,93 @@ export function SettingsShell({
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const section = searchParams.get("section");
+
+    if (
+      section === "workspace" ||
+      section === "team" ||
+      section === "integrations" ||
+      section === "security" ||
+      section === "billing"
+    ) {
+      setActiveSection(section);
+    }
+
+    const integration = searchParams.get("integration");
+
+    if (integration === "gmail") {
+      setActiveSection("integrations");
+      setActiveIntegration("gmail");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (activeSection !== "integrations") {
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadGmailStatus() {
+      try {
+        const response = await fetch("/api/integrations/gmail/status");
+        const data = (await response.json()) as {
+          integration?: GmailIntegrationStatus;
+        };
+
+        if (isMounted) {
+          setGmailStatus(data.integration ?? null);
+        }
+      } catch {
+        if (isMounted) {
+          setGmailStatus(null);
+        }
+      }
+    }
+
+    void loadGmailStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeSection, callbackStatus]);
+
+  function updateSettingsUrl(input: {
+    section?: SettingsSection;
+    integration?: string | null;
+  }) {
+    const params = new URLSearchParams();
+
+    if (input.section) {
+      params.set("section", input.section);
+    }
+
+    if (input.integration) {
+      params.set("integration", input.integration);
+    }
+
+    const query = params.toString();
+    router.replace(query ? `/settings?${query}` : "/settings");
+  }
+
+  function handleSectionChange(section: SettingsSection) {
+    setActiveSection(section);
+    setActiveIntegration(null);
+    updateSettingsUrl({ section });
+  }
+
+  function handleOpenIntegration(integrationId: string) {
+    setActiveSection("integrations");
+    setActiveIntegration(integrationId);
+    updateSettingsUrl({ section: "integrations", integration: integrationId });
+  }
+
+  function handleNavigateBackFromIntegration() {
+    setActiveIntegration(null);
+    updateSettingsUrl({ section: "integrations" });
+  }
 
   function handleConfigureIntegration(name: string) {
     showToast({
@@ -135,7 +231,7 @@ export function SettingsShell({
               <button
                 key={section.id}
                 type="button"
-                onClick={() => setActiveSection(section.id)}
+                onClick={() => handleSectionChange(section.id)}
                 className={`rounded-2xl border px-4 py-3 text-left transition ${
                   isActive
                     ? "border-[#22C55E]/30 bg-[#22C55E]/10 text-white"
@@ -182,31 +278,20 @@ export function SettingsShell({
             />
           ) : null}
 
-          {!isLoading && activeSection === "integrations" ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {integrationCards.map((integration) => (
-                <Card key={integration.id} className="flex h-full flex-col p-6">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white">
-                      {integration.name}
-                    </h3>
-                    <p className="mt-3 text-sm leading-7 text-zinc-400">
-                      {integration.description}
-                    </p>
-                    <p className="mt-4 inline-flex rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-                      Not connected
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleConfigureIntegration(integration.name)}
-                    className="mt-6 inline-flex w-full items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-xs font-semibold text-white transition hover:border-white/[0.15] hover:bg-white/[0.08]"
-                  >
-                    Configure
-                  </button>
-                </Card>
-              ))}
-            </div>
+          {!isLoading && activeSection === "integrations" && activeIntegration === "gmail" ? (
+            <GmailIntegrationSection
+              callbackStatus={callbackStatus}
+              callbackError={callbackError}
+              onNavigateBack={handleNavigateBackFromIntegration}
+            />
+          ) : null}
+
+          {!isLoading && activeSection === "integrations" && activeIntegration !== "gmail" ? (
+            <IntegrationsGrid
+              gmailStatus={gmailStatus}
+              onOpenIntegration={handleOpenIntegration}
+              onConfigurePlaceholder={handleConfigureIntegration}
+            />
           ) : null}
 
           {!isLoading && activeSection === "security" ? (

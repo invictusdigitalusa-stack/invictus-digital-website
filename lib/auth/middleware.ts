@@ -20,6 +20,10 @@ export function isAuthApiPath(pathname: string) {
   return pathname === AUTH_API_PREFIX || pathname.startsWith(`${AUTH_API_PREFIX}/`);
 }
 
+export function isIntegrationOAuthCallbackPath(pathname: string) {
+  return pathname === "/api/integrations/gmail/callback";
+}
+
 export function isInternalPagePath(pathname: string) {
   return INTERNAL_PAGE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
@@ -83,7 +87,7 @@ export async function runAuthMiddleware(request: NextRequest) {
   const authContext = await buildRequestAuthContext(request);
   const pathname = request.nextUrl.pathname;
 
-  if (isAuthApiPath(pathname)) {
+  if (isAuthApiPath(pathname) || isIntegrationOAuthCallbackPath(pathname)) {
     return NextResponse.next();
   }
 
