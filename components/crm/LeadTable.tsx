@@ -1,20 +1,21 @@
 import { Fragment, type RefObject } from "react";
 import { Card } from "@/components/ui/Card";
 import type { AiActivityLog } from "@/lib/aiActivityLogs";
-import type { LeadRow } from "@/lib/supabase";
 import type { QueueStatus } from "@/lib/agentQueue";
+import type { LeadRow } from "@/lib/supabase";
 import { LeadDetails } from "./LeadDetails";
 import { LeadRowComponent } from "./LeadRow";
 
 const TABLE_COLUMNS = [
   "Company",
-  "Website",
-  "Industry",
+  "Contact",
+  "Email",
+  "Phone",
+  "Domain",
   "Status",
   "Priority",
-  "Overall Score",
-  "Last Audit",
-  "Last Outreach",
+  "Score",
+  "Last Contact",
   "Actions",
 ] as const;
 
@@ -50,7 +51,7 @@ export function LeadTable({
   return (
     <Card className="overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1000px] text-left text-sm">
+        <table className="w-full min-w-[1280px] text-left text-sm">
           <thead>
             <tr className="border-b border-white/[0.08] bg-white/[0.02]">
               <th className="w-12 px-4 py-4 md:px-6">
@@ -63,6 +64,7 @@ export function LeadTable({
                   className="h-4 w-4 rounded border-white/[0.15] bg-white/[0.03] accent-[#22C55E]"
                 />
               </th>
+
               {TABLE_COLUMNS.map((column) => (
                 <th
                   key={column}
@@ -73,6 +75,7 @@ export function LeadTable({
               ))}
             </tr>
           </thead>
+
           <tbody>
             {filtered.length > 0 ? (
               filtered.map((lead) => (
@@ -86,6 +89,7 @@ export function LeadTable({
                     onRunAI={onRunAI}
                     onMarkWon={onMarkWon}
                   />
+
                   <LeadDetails
                     lead={lead}
                     activityLogs={activityLogsByLeadId[lead.id] ?? []}
@@ -95,7 +99,7 @@ export function LeadTable({
             ) : (
               <tr>
                 <td
-                  colSpan={10}
+                  colSpan={11}
                   className="px-6 py-16 text-center text-zinc-500"
                 >
                   {emptyMessage}

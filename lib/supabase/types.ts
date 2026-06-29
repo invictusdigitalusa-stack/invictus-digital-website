@@ -7,28 +7,48 @@ import type {
 } from "../types/results";
 import type { ProjectStage, ProjectStorageBucket } from "./constants";
 
-export type { AuditSaveResult, SaveLeadResult, ProjectStage, ProjectStorageBucket };
+export type {
+  AuditSaveResult,
+  SaveLeadResult,
+  ProjectStage,
+  ProjectStorageBucket,
+};
 
 export type LeadRow = {
   id: string;
+
   company: string | null;
   website: string | null;
   industry: string | null;
+
+  email: string | null;
+  phone: string | null;
+  contact_name: string | null;
+  domain: string | null;
+
   status: string | null;
   priority: string | null;
+
   overall_score: number | null;
+
   last_audit_at: string | null;
   last_outreach_at: string | null;
+
   proposal_package: string | null;
+
   business_summary: string | null;
   priority_focus: string | null;
   recommended_package: string | null;
+
   conversion_potential: number | null;
   revenue_potential: number | null;
   closing_probability: number | null;
+
   urgency: string | null;
   competition: string | null;
+
   estimated_lifetime_value: string | null;
+
   next_best_action: string | null;
   reasoning: string | null;
 };

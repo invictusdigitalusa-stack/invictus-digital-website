@@ -26,6 +26,7 @@ type Industry = (typeof industries)[number];
 
 type OutreachForm = {
   companyName: string;
+  contactEmail: string;
   website: string;
   industry: Industry;
   primaryProblem: string;
@@ -38,6 +39,13 @@ type OutreachStats = {
   emailsSent: number;
   replies: number;
   meetings: number;
+};
+
+type GmailSendResponse = {
+  success?: boolean;
+  messageId?: string | null;
+  threadId?: string | null;
+  error?: string | null;
 };
 
 const inputClassName =
@@ -53,9 +61,11 @@ function buildProposalUrl(form: OutreachForm) {
   if (form.companyName.trim()) {
     params.set("company", form.companyName.trim());
   }
+
   if (form.website.trim()) {
     params.set("website", form.website.trim());
   }
+
   params.set("industry", form.industry);
   params.set("package", PROPOSAL_PACKAGE);
   params.set("timeline", PROPOSAL_TIMELINE);
@@ -68,6 +78,7 @@ function parseIndustry(value?: string): Industry {
   if (value && industries.includes(value as Industry)) {
     return value as Industry;
   }
+
   return "Landscaping";
 }
 
@@ -89,6 +100,7 @@ export function OutreachCenter({
   const router = useRouter();
   const [form, setForm] = useState<OutreachForm>({
     companyName: initialCompany,
+    contactEmail: "",
     website: initialWebsite,
     industry: parseIndustry(initialIndustry),
     primaryProblem: initialPrimaryProblem,
@@ -99,7 +111,9 @@ export function OutreachCenter({
   const [generated, setGenerated] = useState(false);
   const [ready, setReady] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [generateMessage, setGenerateMessage] = useState<string | null>(null);
+  const [sendMessage, setSendMessage] = useState<string | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [stats, setStats] = useState<OutreachStats>({
     emailsGenerated: 0,
@@ -110,10 +124,14 @@ export function OutreachCenter({
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.companyName.trim()) return;
+
+    if (!form.companyName.trim()) {
+      return;
+    }
 
     setIsGenerating(true);
     setGenerateMessage(null);
+    setSendMessage(null);
     setReady(false);
 
     try {
@@ -203,12 +221,11 @@ export function OutreachCenter({
   }
 
   async function handleMarkReady() {
-    if (!generated) return;
+    if (!generated) {
+      return;
+    }
+
     setReady(true);
-    setStats((prev) => ({
-      ...prev,
-      emailsSent: prev.emailsSent + 1,
-    }));
 
     await saveOutreachToLead({
       companyName: form.companyName,
@@ -218,14 +235,71 @@ export function OutreachCenter({
     router.push(buildProposalUrl(form));
   }
 
+  async function handleSendEmail() {
+    if (!generated) {
+      setSendMessage("Generate an email before sending.");
+      return;
+    }
+
+    if (!form.contactEmail.trim()) {
+      setSendMessage("Add a recipient email before sending.");
+      return;
+    }
+
+    setIsSending(true);
+    setSendMessage(null);
+
+    try {
+      const response = await fetch("/api/integrations/gmail/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: form.contactEmail.trim(),
+          subject: previewSubject,
+          body: previewBody,
+        }),
+      });
+
+      const data = (await response.json()) as GmailSendResponse;
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? "Failed to send email.");
+      }
+
+      setStats((prev) => ({
+        ...prev,
+        emailsSent: prev.emailsSent + 1,
+      }));
+
+      setSendMessage(
+        data.messageId
+          ? `Email sent. Gmail message ID: ${data.messageId}`
+          : "Email sent."
+      );
+
+      await saveOutreachToLead({
+        companyName: form.companyName,
+        websiteUrl: form.website,
+      });
+    } catch (error) {
+      setSendMessage(
+        error instanceof Error ? error.message : "Failed to send email."
+      );
+    } finally {
+      setIsSending(false);
+    }
+  }
+
   const previewSubject =
     email.subject || `Quick idea for ${form.companyName.trim() || "{{Company}}"}`;
 
   const previewBody =
     email.body ||
-    `Hi ${form.companyName.trim() || "{{Company}}"},
-
-I came across your website while looking at landscaping companies in your area.
+    `Hi ${form.companyName.trim() || "{{Company}"},
+    
+I came across your website while looking at companies in your space.
 
 I noticed a few opportunities that could help improve conversions and local visibility.
 
@@ -233,9 +307,9 @@ The biggest improvement I saw was:
 
 ${form.topImprovement.trim() || "{{Top Improvement}}"}
 
-I actually put together a quick redesign concept showing what this could look like.
+I put together a quick concept showing what this could look like.
 
-If you're interested, I'd be happy to send it over.
+If you're interested, I can send it over.
 
 Best,
 Douglas
@@ -245,13 +319,13 @@ Invictus Digital`;
     <Container className="py-8 md:py-12">
       <div className="mb-10 max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#22C55E]">
-          Internal Tool
+          Sales System
         </p>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-4xl lg:text-5xl">
           Outreach Center
         </h1>
         <p className="mt-4 text-base leading-8 text-zinc-400 md:text-lg">
-          Generate personalized outreach in minutes.
+          Generate, review, and send personalized outreach through Gmail.
         </p>
       </div>
 
@@ -260,9 +334,13 @@ Invictus Digital`;
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-500">
             Lead Input
           </p>
+
           <form onSubmit={handleGenerate} className="mt-6 space-y-5">
             <div>
-              <label htmlFor="company-name" className="mb-2 block text-sm text-zinc-300">
+              <label
+                htmlFor="company-name"
+                className="mb-2 block text-sm text-zinc-300"
+              >
                 Company Name
               </label>
               <input
@@ -279,7 +357,29 @@ Invictus Digital`;
             </div>
 
             <div>
-              <label htmlFor="website" className="mb-2 block text-sm text-zinc-300">
+              <label
+                htmlFor="contact-email"
+                className="mb-2 block text-sm text-zinc-300"
+              >
+                Recipient Email
+              </label>
+              <input
+                id="contact-email"
+                type="email"
+                value={form.contactEmail}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, contactEmail: e.target.value }))
+                }
+                className={inputClassName}
+                placeholder="owner@example.com"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="website"
+                className="mb-2 block text-sm text-zinc-300"
+              >
                 Website
               </label>
               <input
@@ -295,7 +395,10 @@ Invictus Digital`;
             </div>
 
             <div>
-              <label htmlFor="industry" className="mb-2 block text-sm text-zinc-300">
+              <label
+                htmlFor="industry"
+                className="mb-2 block text-sm text-zinc-300"
+              >
                 Industry
               </label>
               <select
@@ -310,7 +413,11 @@ Invictus Digital`;
                 className={`${inputClassName} cursor-pointer`}
               >
                 {industries.map((industry) => (
-                  <option key={industry} value={industry} className="bg-[#0a0a0a]">
+                  <option
+                    key={industry}
+                    value={industry}
+                    className="bg-[#0a0a0a]"
+                  >
                     {industry}
                   </option>
                 ))}
@@ -318,7 +425,10 @@ Invictus Digital`;
             </div>
 
             <div>
-              <label htmlFor="primary-problem" className="mb-2 block text-sm text-zinc-300">
+              <label
+                htmlFor="primary-problem"
+                className="mb-2 block text-sm text-zinc-300"
+              >
                 Primary Problem
               </label>
               <textarea
@@ -326,7 +436,10 @@ Invictus Digital`;
                 rows={3}
                 value={form.primaryProblem}
                 onChange={(e) =>
-                  setForm((prev) => ({ ...prev, primaryProblem: e.target.value }))
+                  setForm((prev) => ({
+                    ...prev,
+                    primaryProblem: e.target.value,
+                  }))
                 }
                 className={`${inputClassName} resize-none`}
                 placeholder="Weak mobile experience and no clear service pages."
@@ -334,7 +447,10 @@ Invictus Digital`;
             </div>
 
             <div>
-              <label htmlFor="top-improvement" className="mb-2 block text-sm text-zinc-300">
+              <label
+                htmlFor="top-improvement"
+                className="mb-2 block text-sm text-zinc-300"
+              >
                 Top Improvement
               </label>
               <textarea
@@ -342,7 +458,10 @@ Invictus Digital`;
                 rows={3}
                 value={form.topImprovement}
                 onChange={(e) =>
-                  setForm((prev) => ({ ...prev, topImprovement: e.target.value }))
+                  setForm((prev) => ({
+                    ...prev,
+                    topImprovement: e.target.value,
+                  }))
                 }
                 className={`${inputClassName} resize-none`}
                 placeholder="Expand local service pages with stronger CTAs."
@@ -419,10 +538,16 @@ Invictus Digital`;
                   Marked ready for outreach.
                 </div>
               ) : null}
+
+              {sendMessage ? (
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-zinc-300">
+                  {sendMessage}
+                </div>
+              ) : null}
             </div>
           </Card>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-4">
             <button
               type="button"
               onClick={() => copyToClipboard(previewBody, "Email copied")}
@@ -430,6 +555,7 @@ Invictus Digital`;
             >
               Copy Email
             </button>
+
             <button
               type="button"
               onClick={() => copyToClipboard(previewSubject, "Subject copied")}
@@ -437,6 +563,7 @@ Invictus Digital`;
             >
               Copy Subject
             </button>
+
             <button
               type="button"
               onClick={handleMarkReady}
@@ -444,6 +571,15 @@ Invictus Digital`;
               className="rounded-2xl border border-[#22C55E]/20 bg-[#22C55E]/10 px-5 py-4 text-sm font-semibold text-[#22C55E] transition hover:border-[#22C55E]/30 hover:bg-[#22C55E]/15 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Mark Ready
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSendEmail}
+              disabled={!generated || isSending}
+              className="rounded-2xl border border-[#22C55E]/30 bg-[#22C55E] px-5 py-4 text-sm font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isSending ? "Sending..." : "Send Email"}
             </button>
           </div>
 

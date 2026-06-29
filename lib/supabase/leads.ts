@@ -13,9 +13,27 @@ import type {
 } from "./types";
 
 const LEAD_LIST_SELECT =
-  "id, company, website, industry, status, priority, overall_score, last_audit_at, last_outreach_at, proposal_package, business_summary, priority_focus, recommended_package, conversion_potential, revenue_potential, closing_probability, urgency, competition, estimated_lifetime_value, next_best_action, reasoning";
+  "id, company, website, industry, email, phone, contact_name, domain, status, priority, overall_score, last_audit_at, last_outreach_at, proposal_package, business_summary, priority_focus, recommended_package, conversion_potential, revenue_potential, closing_probability, urgency, competition, estimated_lifetime_value, next_best_action, reasoning";
 
 const LEAD_OUTREACH_SELECT = `${LEAD_LIST_SELECT}, top_improvement, company_tone, target_audience, main_services, unique_selling_points, competitive_advantages, brand_positioning, trust_signals, biggest_weaknesses, biggest_opportunities, recommended_offer, estimated_business_size, seo_maturity, conversion_maturity, ai_visibility_maturity, ai_executive_summary, ai_strengths, ai_weaknesses, ai_prioritized_actions, ai_conversion_recommendations, ai_local_seo_recommendations`;
+
+function getDomainFromWebsite(websiteUrl: string) {
+  const cleanWebsite = websiteUrl.trim();
+
+  if (!cleanWebsite) {
+    return null;
+  }
+
+  try {
+    return new URL(cleanWebsite).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return cleanWebsite
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .split("/")[0]
+      .toLowerCase();
+  }
+}
 
 export async function fetchLeads(): Promise<LeadRow[]> {
   const supabase = createSupabaseClient();
@@ -98,6 +116,7 @@ export async function saveAuditToLead({
     const { error } = await supabase
       .from("leads")
       .update({
+        domain: getDomainFromWebsite(websiteUrl),
         overall_score: audit.overall_score,
         design_score: audit.design_score,
         mobile_score: audit.mobile_score,
@@ -133,13 +152,12 @@ export async function saveAuditToLead({
               ai_seo_recommendations: insights.seoRecommendations,
               ai_conversion_recommendations: insights.conversionRecommendations,
               ai_local_seo_recommendations: insights.localSeoRecommendations,
-              ai_visibility_recommendations: insights.aiVisibilityRecommendations,
+              ai_visibility_recommendations:
+                insights.aiVisibilityRecommendations,
               ai_prioritized_actions: insights.prioritizedActions,
             }
           : {}),
-        ...(businessProfile
-          ? mapBusinessProfileToLeadUpdate(businessProfile)
-          : {}),
+        ...(businessProfile ? mapBusinessProfileToLeadUpdate(businessProfile) : {}),
         status: "Reviewed",
         last_audit_at: new Date().toISOString(),
       })
@@ -178,6 +196,7 @@ export async function saveOutreachToLead({
     const { error } = await supabase
       .from("leads")
       .update({
+        domain: getDomainFromWebsite(websiteUrl),
         status: "Contacted",
         last_outreach_at: new Date().toISOString(),
       })
@@ -222,6 +241,7 @@ export async function saveProposalToLead({
     const { error } = await supabase
       .from("leads")
       .update({
+        domain: getDomainFromWebsite(websiteUrl),
         status: "Proposal Sent",
         proposal_package: proposalPackage,
         proposal_timeline: proposalTimeline,
@@ -268,9 +288,14 @@ export async function updateLeadStatus({
       return { success: false, error: "No matching lead found in CRM." };
     }
 
+    const updatePayload =
+      websiteUrl.trim().length > 0
+        ? { status, domain: getDomainFromWebsite(websiteUrl) }
+        : { status };
+
     const { error } = await supabase
       .from("leads")
-      .update({ status })
+      .update(updatePayload)
       .eq("id", resolvedLeadId);
 
     if (error) {

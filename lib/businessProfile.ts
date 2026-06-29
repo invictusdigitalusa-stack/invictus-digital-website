@@ -173,6 +173,19 @@ function generateDeterministicBusinessProfile(
     aiVisibilityMaturity: scoreToMaturity(audit.ai_visibility_score, 5),
     priorityFocus:
       insights.prioritizedActions[0] ?? audit.top_improvement,
+
+    email: "",
+    phone: "",
+    contactName: "",
+    domain: "",
+
+    facebook: "",
+    instagram: "",
+    linkedin: "",
+    youtube: "",
+
+    googleBusinessProfile: "",
+    googleMapsUrl: "",
   };
 }
 
@@ -248,6 +261,24 @@ function mergeBusinessProfile(
       fallback.aiVisibilityMaturity,
     priorityFocus:
       normalizeString(parsed.priorityFocus) || fallback.priorityFocus,
+
+    email: normalizeString((parsed as any).email) || fallback.email,
+    phone: normalizeString((parsed as any).phone) || fallback.phone,
+    contactName:
+      normalizeString((parsed as any).contactName) || fallback.contactName,
+    domain: normalizeString((parsed as any).domain) || fallback.domain,
+
+    facebook: normalizeString((parsed as any).facebook) || fallback.facebook,
+    instagram: normalizeString((parsed as any).instagram) || fallback.instagram,
+    linkedin: normalizeString((parsed as any).linkedin) || fallback.linkedin,
+    youtube: normalizeString((parsed as any).youtube) || fallback.youtube,
+
+    googleBusinessProfile:
+      normalizeString((parsed as any).googleBusinessProfile) ||
+      fallback.googleBusinessProfile,
+    googleMapsUrl:
+      normalizeString((parsed as any).googleMapsUrl) ||
+      fallback.googleMapsUrl,
   };
 }
 

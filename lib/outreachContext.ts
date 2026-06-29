@@ -40,6 +40,21 @@ function hasAuditData(lead: LeadOutreachRow) {
   );
 }
 
+function emptyContactProfileFields() {
+  return {
+    email: "",
+    phone: "",
+    contactName: "",
+    domain: "",
+    facebook: "",
+    instagram: "",
+    linkedin: "",
+    youtube: "",
+    googleBusinessProfile: "",
+    googleMapsUrl: "",
+  };
+}
+
 export function buildOutreachContextFromLead(
   lead: LeadOutreachRow,
   fallbackInput: OutreachFallbackInput
@@ -171,6 +186,16 @@ export function buildOutreachContextFromLead(
       lead.next_best_action?.trim() ||
       topImprovement ||
       "Improve website conversions",
+    email: lead.email ?? "",
+    phone: lead.phone ?? "",
+    contactName: lead.contact_name ?? "",
+    domain: lead.domain ?? "",
+    facebook: "",
+    instagram: "",
+    linkedin: "",
+    youtube: "",
+    googleBusinessProfile: "",
+    googleMapsUrl: "",
   };
 
   const leadIntelligence: LeadIntelligence = {
@@ -273,6 +298,7 @@ export function buildOutreachContextFromInput(
     conversionMaturity: "Medium",
     aiVisibilityMaturity: "Medium",
     priorityFocus: topImprovement,
+    ...emptyContactProfileFields(),
   };
 
   const leadIntelligence: LeadIntelligence = {
